@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<link>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>User List</title>
+
+    <script type="text/javascript" src='webjars/jquery/3.1.1-1/jquery.min.js'></script>
+   <!-- <link rel="stylesheet" href="webjars/bootstrap/3.3.7-1/css/bootstrap.css"/>-->
+<meta name="viewport" content="initial-scale=1, maximum-scale=1">
+<link rel='stylesheet' href='webjars/bootstrap/3.3.7-1/css/bootstrap.min.css'>
+
+
+</head>
+<body>
+
+
+
+    <div class="container .col-md-8">
+        <div id="clientList"> </div>
+    </div>
+</body>
+
+<script>
+
+    var clients;
+
+    var getClientList = () =>
+    {
+        var settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": "http://localhost:8080/clients",
+            "method": "GET",
+            "headers": {
+                "cache-control": "no-cache"
+            }
+        }
+
+
+
+        $.ajax(settings).done(function (response) {
+
+            clients = response;
+
+            let elem = document.getElementById('clientList');
+
+            // создание  кнопки
+            let btn = document.createElement ('input');
+            btn.type = 'button'; // или 'submit', или 'reset';
+            btn.id = 'change';
+            btn.value = 'Изменить'; // или 'Отправить', или 'Очистить'...
+            btn.className = "btn btn-primary";
+
+            let bodyTable =`<table class="table table-striped">
+                  <thead>
+                         <tr>
+                             <th>Фамилия</th>
+                             <th>Имя</th>
+                             <th>Отчество</th>
+                             <th>Телефон</th>
+                             <th>Тип</th>
+                             <th>Комментарий</th>
+                         </tr>
+                  </thead>
+                   <tbody>`;
+
+            for (let client of response){
+
+                bodyTable += `
+                         <tr>
+                             <td > ${client.name}</td>
+                            <td> ${client.surname}</td>
+                            <td> ${client.patronymic}</td>
+                            <td> ${client.phonesByIdPhone.phone}</td>
+                            <td> ${client.phonesByIdPhone.type}</td>
+                            <td> ${client.phonesByIdPhone.comment}</td>
+                            <td style="display: none"> ${client.idUser}</td>
+                            <td style="display: none"> ${client.phonesByIdPhone.idPhone}</td>
+                         </tr>`;
+
+            }
+            bodyTable +=`</tbody>  </table>`;
+
+
+            elem.innerHTML = bodyTable;
+            elem.appendChild(btn);
+
+
+        });
+    }
+
+    function getDataFromTable() {
+        let data = "[";
+
+
+        $("#tableClients tr").each(function () {
+
+            let itemData = "{";
+
+            $("td", this).each(function () {
+                // тут this - ячейка
+                // получаем содержимое ячейки
+                var value = $(this).html();
+                // и её тип
+                var type = $(this).attr('type');
+
+                if (type == "idUser") {
+
+                    itemData += `"idUser" : ${$(this).html()}, `;
+
+
+                }
+                if (type == "name") {
+                    itemData += `"name" : "${$(this).html()}", `;
+
+                }
+                if (type == "surname") {
+                    itemData += `"surname" : "${$(this).html()}", `;
+
+                }
+                if (type == "patronymic") {
+                    itemData += `"patronymic" : "${$(this).html()}", `;
+
+                }
+                if (type == "idPhone") {
+                    itemData += ` "phonesByIdPhone": {
+                                        "idPhone" : ${$(this).html()}, `;
+
+                }
+                if (type == "phone") {
+                    itemData += `"phone" : "${$(this).children().val()}", `;
+
+                }
+                if (type == "type") {
+                    itemData += `"type" : "${$(this).children().val()}", `;
+
+                }
+                if (type == "comment") {
+                    itemData += `"comment" : "${$(this).children().val()}" } `;
+
+                }
+
+
+            });
+            itemData += "},";
+            data += itemData;
+        });
+        data = data.slice(0, -1);
+        data += "]"
+        return data;
+    }
+
+    $(document).on('click', '#change' ,function(){
+
+
+        document.getElementById('clientList').innerHTML = '';
+
+        let elem = document.getElementById('clientList');
+
+        // создание  кнопки
+        let btn = document.createElement ('input');
+        btn.type = 'button'; // или 'submit', или 'reset';
+        btn.id = 'save';
+        btn.value = 'Сохранить'; // или 'Отправить', или 'Очистить'...
+        btn.className = "btn btn-primary";
+
+        let bodyTable =`<table class="table table-striped" id="tableClients">
+                  <thead>
+                         <tr>
+                             <th>Фамилия</th>
+                             <th>Имя</th>
+                             <th>Отчество</th>
+                             <th>Телефон</th>
+                             <th>Тип</th>
+                             <th>Комментарий</th>
+                         </tr>
+                  </thead>
+                   <tbody>`;
+
+        for (let client of clients){
+
+
+            bodyTable += `
+                         <tr>
+                         <td type="idUser" style="display: none"> ${client.idUser}</td>
+                             <td type="name" >  ${client.name} </td>
+                            <td type="surname"> ${client.surname}</td>
+                            <td type="patronymic"> ${client.patronymic}</td>
+                            <td type="idPhone" style="display: none"> ${client.phonesByIdPhone.idPhone}</td>
+                            <td type="phone"> <input id="phone" class="form-control"  type="text" value="${client.phonesByIdPhone.phone}"> </td>
+                            <td type="type"><select class="form-control" id="type">
+                                <option>${client.phonesByIdPhone.type}</option>
+                                          <option>Мобильный</option>
+                                          <option>Домашний</option>
+                                          <option>Нет  сведений</option>
+                                        </select> </td>
+                            <td type="comment"> <input id="comment" class="form-control"  type="text" value="${client.phonesByIdPhone.comment}"> </td>
+
+
+                         </tr>`;
+
+
+        }
+        bodyTable +=`</tbody>  </table>`;
+
+
+
+        elem.innerHTML = bodyTable;
+        elem.appendChild(btn);
+
+
+    });
+
+    $(document).on('click', '#save' ,function(){
+
+        let data = getDataFromTable()
+
+        var settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": "http://localhost:8080/clientsUpdate",
+            "method": "PUT",
+            "headers": {
+                "content-type": "application/json",
+                "cache-control": "no-cache",
+
+            },
+            "processData": false,
+            "data":  data
+        }
+
+        $.ajax(settings).done(function (response) {
+            document.getElementById('clientList').innerHTML = '';
+            getClientList();
+        });
+
+
+    });
+
+    window.onload = function () {
+
+        getClientList();
+
+    }
+
+</script>
+</html>
